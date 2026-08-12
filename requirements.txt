@@ -1,0 +1,10 @@
+streamlit
+pandas
+plotly
+scikit-learn
+numpy
+thefuzz
+openpyxl
+lxml
+html5lib
+beautifulsoup4
