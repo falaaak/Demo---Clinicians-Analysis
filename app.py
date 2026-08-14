@@ -187,22 +187,16 @@ def metric_card(label, value):
     </div>
     """, unsafe_allow_html=True)
 
-def render_table(df):
-    rows = ""
-    for _, row in df.iterrows():
-        rows += "<tr>"
-        for col in df.columns:
-            rows += f"<td>{row[col]}</td>"
-        rows += "</tr>"
-    headers = "".join([f"<th>{col}</th>" for col in df.columns])
-    st.markdown(f"""
-    <div class="chart-wrap" style="padding:0; overflow-x:auto;">
-    <table class="data-table">
-        <thead><tr>{headers}</tr></thead>
-        <tbody>{rows}</tbody>
-    </table>
-    </div>
-    """, unsafe_allow_html=True)
+def render_table(df, key):
+    df = df.copy()
+    df.insert(0, 'Position', range(1, len(df) + 1))
+    
+    search_term = st.text_input("🔍 Filter Table:", key=f"search_{key}")
+    if search_term:
+        mask = df.astype(str).apply(lambda x: x.str.contains(search_term, case=False, na=False)).any(axis=1)
+        df = df[mask]
+        
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 # --- Header ---
 st.markdown("""
@@ -343,7 +337,7 @@ with t1:
             top_n_details = pd.merge(top_n_steady, monthly_doc_summary[['Doctor Name', 'Qualification', 'Mark_Exec']].drop_duplicates(subset=['Doctor Name']), on='Doctor Name', how='left')
             top_n_details['Mark_Exec'] = top_n_details['Mark_Exec'].fillna("Unassigned")
             top_n_details['Total Amount'] = top_n_details['Total Amount'].apply(lambda x: f"₹{x:,.2f}")
-            render_table(top_n_details)
+            render_table(top_n_details, key="t1")
         else:
             st.info("No doctors met the criteria in the selected time period.")
 
@@ -370,7 +364,7 @@ with t2:
     if not unassigned_totals.empty:
         unassigned_details = pd.merge(unassigned_totals, df_full[['Doctor Name', 'Qualification']].drop_duplicates(subset=['Doctor Name']), on='Doctor Name', how='left')
         unassigned_details['Total Amount'] = unassigned_details['Total Amount'].apply(lambda x: f"₹{x:,.2f}")
-        render_table(unassigned_details)
+        render_table(unassigned_details, key="t2")
     else:
         st.info("No unassigned doctors met the >₹25,000 criteria in the entire dataset.")
 
@@ -399,7 +393,7 @@ with t3:
             if selected_test:
                 test_specific_df = top_docs_tests[top_docs_tests['Test Name'] == selected_test]
                 top_5_docs_test = test_specific_df.groupby('Doctor Name')['Test Count'].sum().nlargest(5).reset_index()
-                render_table(top_5_docs_test)
+                render_table(top_5_docs_test, key="t3")
         else:
             st.info("No test data available for the selected top doctors.")
 
@@ -475,7 +469,7 @@ with t4:
             forecast_df = forecast_df[['Doctor Name', 'Qualification', 'Mark_Exec', 'Historical Avg (₹)', 'Growth Trend (₹/mo)', 'Performance Remark', 'Projected Vol (Aug 2027)', 'Projected Amt (Aug 2027)']]
             
             st.markdown("""<div class="chart-wrap"><div class="chart-title">Forecast Data Table</div>""", unsafe_allow_html=True)
-            render_table(forecast_df)
+            render_table(forecast_df, key="t4")
             st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.info("Insufficient data to generate 2027 projections.")
@@ -538,14 +532,14 @@ with t5:
                     
                     if not test_diff.empty:
                         st.markdown(f"**Sensitive Tests Drop for {selected_drop_doc}**")
-                        render_table(test_diff.head(10))
+                        render_table(test_diff.head(10), key="t5_1")
                     
                 drop_df = pd.merge(drop_df, monthly_doc_summary[['Doctor Name', 'Qualification', 'Mark_Exec']].drop_duplicates(subset=['Doctor Name']), on='Doctor Name', how='left')
                 drop_df['Mark_Exec'] = drop_df['Mark_Exec'].fillna("Unassigned")
                 drop_df['Early Avg (₹)'] = drop_df['Early Avg (₹)'].apply(lambda x: f"₹{x:,.2f}")
                 drop_df['Late Avg (₹)'] = drop_df['Late Avg (₹)'].apply(lambda x: f"₹{x:,.2f}")
                 drop_df['Drop Amount (₹)'] = drop_df['Drop Amount (₹)'].apply(lambda x: f"₹{x:,.2f}")
-                render_table(drop_df)
+                render_table(drop_df, key="t5_2")
             else:
                 st.info("No significant drops detected in the selected period.")
 
@@ -588,7 +582,7 @@ with t6:
             st.markdown("""<div class="chart-wrap">""", unsafe_allow_html=True)
             st.plotly_chart(fig_top, use_container_width=True, config={"displayModeBar": False})
             st.markdown("</div>", unsafe_allow_html=True)
-            render_table(top_performers)
+            render_table(top_performers, key="t6_1")
             
         st.markdown("---")
         
@@ -601,7 +595,7 @@ with t6:
             st.markdown("""<div class="chart-wrap">""", unsafe_allow_html=True)
             st.plotly_chart(fig_under, use_container_width=True, config={"displayModeBar": False})
             st.markdown("</div>", unsafe_allow_html=True)
-            render_table(underperformers)
+            render_table(underperformers, key="t6_2")
 
 # --- Tab 7: Outliers (Institutions) ---
 with t7:
@@ -619,6 +613,6 @@ with t7:
     
     outlier_totals['Total Amount'] = outlier_totals['Total Amount'].apply(lambda x: f"₹{x:,.2f}")
     if not outlier_totals.empty:
-        render_table(outlier_totals)
+        render_table(outlier_totals, key="t7")
     else:
         st.info("No outliers found in the dataset.")
