@@ -584,6 +584,16 @@ with t8:
         st.markdown(f"### Doctor Test Share Analysis (Top {top_n} Doctors)")
         st.markdown("Analyze the specific tests prescribed by your top doctors to identify their clinical focus and cross-selling opportunities.")
         
+        # Overall KPIs for all doctors in the selected period
+        overall_vol = df['Total Volume'].sum()
+        overall_amt = df['Total Amount'].sum()
+        
+        oc1, oc2 = st.columns(2)
+        with oc1: metric_card("Overall Volume (All Doctors)", f"{overall_vol:,.0f}")
+        with oc2: metric_card("Overall Revenue (All Doctors)", f"₹{overall_amt:,.0f}")
+        
+        st.markdown("<br/>", unsafe_allow_html=True)
+        
         # Get Top N doctors by total amount in selected period
         overall_top_n_docs = monthly_doc_summary.groupby('Doctor Name')['Total Amount'].sum().nlargest(top_n).index.tolist()
         
