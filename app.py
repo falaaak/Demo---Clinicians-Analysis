@@ -248,14 +248,15 @@ def render_filters(key_prefix):
 
 
 # Tabs
-t1, t2, t3, t4, t5, t6, t7 = st.tabs([
+t1, t2, t3, t4, t5, t6, t7, t8 = st.tabs([
     "Top N Doctors", 
     "Unassigned Steady Docs", 
     "Top N Tests", 
     "Growth Forecast", 
     "Churn & Drop Analysis",
     "Top Tests & Strategy",
-    "Outliers (Institutions)"
+    "Outliers (Institutions)",
+    "Doctor Test Share"
 ])
 
 # --- Tab 1: Top N Doctors ---
@@ -575,3 +576,63 @@ with t7:
         render_table(outlier_totals, key="t7")
     else:
         st.info("No outliers found in the dataset.")
+
+# --- Tab 8: Doctor Test Share ---
+with t8:
+    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t8")
+    if selected_months:
+        st.markdown(f"### Doctor Test Share Analysis (Top {top_n} Doctors)")
+        st.markdown("Analyze the specific tests prescribed by your top doctors to identify their clinical focus and cross-selling opportunities.")
+        
+        # Get Top N doctors by total amount in selected period
+        overall_top_n_docs = monthly_doc_summary.groupby('Doctor Name')['Total Amount'].sum().nlargest(top_n).index.tolist()
+        
+        if overall_top_n_docs:
+            c1, c2 = st.columns([1, 1])
+            with c1:
+                selected_doc = st.selectbox("Select a Doctor from Top N:", overall_top_n_docs, key="t8_doc_select")
+            with c2:
+                num_tests = st.number_input("Number of Top Tests to show:", min_value=5, max_value=100, value=20, step=5, key="t8_num_tests")
+                
+            if selected_doc:
+                doc_tests = test_df[test_df['Doctor Name'] == selected_doc]
+                
+                # Group by test
+                doc_test_summary = doc_tests.groupby('Test Name').agg({
+                    'Test Count': 'sum',
+                    'Test Amount': 'sum'
+                }).reset_index()
+                
+                total_doc_vol = doc_test_summary['Test Count'].sum()
+                total_doc_amt = doc_test_summary['Test Amount'].sum()
+                
+                # Sort and take top N
+                top_doc_tests = doc_test_summary.nlargest(num_tests, 'Test Amount').copy()
+                top_doc_tests = top_doc_tests.sort_values('Test Amount', ascending=True)
+                
+                st.markdown(f"#### {selected_doc} - Top {num_tests} Tests")
+                
+                metrics_col1, metrics_col2 = st.columns(2)
+                with metrics_col1: metric_card("Total Volume (Selected Months)", f"{total_doc_vol:,.0f}")
+                with metrics_col2: metric_card("Total Revenue (Selected Months)", f"₹{total_doc_amt:,.0f}")
+                
+                if not top_doc_tests.empty:
+                    fig8 = px.bar(top_doc_tests, x='Test Amount', y='Test Name', orientation='h', color_discrete_sequence=['#9400D3'], height=max(300, len(top_doc_tests)*30))
+                    fig8.update_layout(PLOT_LAYOUT)
+                    st.markdown("""<div class="chart-wrap">""", unsafe_allow_html=True)
+                    st.plotly_chart(fig8, use_container_width=True, config={"displayModeBar": False})
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Prepare table
+                    table_df = top_doc_tests.sort_values('Test Amount', ascending=False).copy()
+                    table_df['% of Revenue'] = (table_df['Test Amount'] / total_doc_amt * 100).apply(lambda x: f"{x:.1f}%")
+                    table_df['% of Volume'] = (table_df['Test Count'] / total_doc_vol * 100).apply(lambda x: f"{x:.1f}%")
+                    table_df['Test Amount'] = table_df['Test Amount'].apply(lambda x: f"₹{x:,.2f}")
+                    
+                    # Reorder
+                    table_df = table_df[['Test Name', 'Test Count', '% of Volume', 'Test Amount', '% of Revenue']]
+                    render_table(table_df, key="t8_table")
+                else:
+                    st.info("No test data available for this doctor in the selected period.")
+        else:
+            st.info("No top doctors found for the selected period.")
