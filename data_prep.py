@@ -106,6 +106,15 @@ def prep_data():
 
     # Apply maps to canonical names
     main_df['Mark_Exec'] = main_df['Doctor Name'].map(mark_exec_map).fillna(np.nan)
+    
+    # Manual assignments from user request
+    jishnu_docs = [
+        'AABU ALEX THOMAS.', 'SUDHEER.M.', 'ABDUREHIMAN.K.P.,', 
+        'SAMEER SAKKEER HUSSAIN', 'SABITHA NITHYANANDAN', 'CHANDHU.A.S', 
+        'BIJU.I.K.', 'VISHNUPRIYA.A.R', 'BIJOY.K.', 'ZAKEER.N.P', 'SREEJITH.K.'
+    ]
+    main_df.loc[main_df['Doctor Name'].isin(jishnu_docs), 'Mark_Exec'] = 'JISHNU'
+    
     main_df['Degree'] = main_df['Doctor Name'].map(deg_map).fillna('')
     
     print("Saving processed data...")
