@@ -384,11 +384,11 @@ with t4:
             if proj_amt > 0:
                 growth_val = model_amt.coef_[0]
                 if growth_val > 0:
-                    remark = "<span style='color: #10B981; font-weight: 700; font-size: 1.1rem;'>▲</span> <span style='color: #10B981; font-weight: 600;'>Growth</span>"
+                    remark = "🟢 ▲ Growth"
                 elif growth_val < 0:
-                    remark = "<span style='color: #EF4444; font-weight: 700; font-size: 1.1rem;'>▼</span> <span style='color: #EF4444; font-weight: 600;'>Drop</span>"
+                    remark = "🔴 ▼ Drop"
                 else:
-                    remark = "<span style='color: #5F5F6E; font-weight: 700; font-size: 1.1rem;'>—</span> <span style='color: #5F5F6E; font-weight: 600;'>Stable</span>"
+                    remark = "⚪ — Stable"
                     
                 forecast_records.append({
                     'Doctor Name': doc,
@@ -457,6 +457,7 @@ with t5:
                 if early > 3000 and (early - late) > 2000:
                     drop_records.append({
                         'Doctor Name': doc,
+                        'Performance Remark': '🔴 ▼ Drop',
                         'Early Avg (₹)': early,
                         'Late Avg (₹)': late,
                         'Drop Amount (₹)': early - late
@@ -493,6 +494,10 @@ with t5:
                 drop_df['Early Avg (₹)'] = drop_df['Early Avg (₹)'].apply(lambda x: f"₹{x:,.2f}")
                 drop_df['Late Avg (₹)'] = drop_df['Late Avg (₹)'].apply(lambda x: f"₹{x:,.2f}")
                 drop_df['Drop Amount (₹)'] = drop_df['Drop Amount (₹)'].apply(lambda x: f"₹{x:,.2f}")
+                
+                # Reorder columns for presentation
+                drop_df = drop_df[['Doctor Name', 'Qualification', 'Mark_Exec', 'Performance Remark', 'Early Avg (₹)', 'Late Avg (₹)', 'Drop Amount (₹)']]
+                
                 render_table(drop_df, key="t5_2")
             else:
                 st.info("No significant drops detected in the selected period.")
