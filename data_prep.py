@@ -41,7 +41,7 @@ def prep_data():
             deg_map[name] = qual_str
             
     # Filter Outliers (MCH, IMCH, etc.)
-    outlier_keywords = ['MCH', 'IMCH', 'BMH', 'KMCT', 'HAIR', 'ESI', 'HOSPITAL', 'HOSP', 'CLINIC', 'LAB', 'LABS', 'CARE', 'HEALTHCARE']
+    outlier_keywords = ['MCH', 'IMCH', 'BMH', 'KMCT', 'HAIR', 'ESI', 'HOSPITAL', 'HOSP', 'CLINIC', 'LAB', 'LABS', 'CARE', 'HEALTHCARE', 'BANK', 'AIMS', 'CGHS', 'RAILWAY', 'FOUNDATION', 'SREEDHAREEYAM']
     def is_outlier(name):
         name_upper = name.upper()
         for kw in outlier_keywords:
