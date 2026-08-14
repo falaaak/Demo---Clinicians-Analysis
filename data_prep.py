@@ -115,6 +115,23 @@ def prep_data():
     ]
     main_df.loc[main_df['Doctor Name'].isin(jishnu_docs), 'Mark_Exec'] = 'JISHNU'
     
+    vishnu_docs = [
+        'ROJITH K BALAKRISHNAN', 'JUBIN KAMAR.', 'SARFARAZ ASLAM.', 'DAISY THOMAS',
+        'NASEER ALI.', 'VIJAY K ASHOK.', 'BINOY.J.PAUL.', 'VINUGOPAL.S.',
+        'ALTAF ALI NAUSHAD', 'JOMY VADASSERIL JOSE.', 'ATHUL PAUL'
+    ]
+    main_df.loc[main_df['Doctor Name'].isin(vishnu_docs), 'Mark_Exec'] = 'Vishnu P'
+    
+    prashob_docs = [
+        'ANISH KUMAR,', 'RADHAMANI.M', 'ARUN SIVASANKAR', 'ANEES MANNATH.',
+        'REJU.V.K.', 'JITHESH.K.', 'RAMACHANDRAN.T.M.', 'TINOY PAUL.',
+        'NUZIL MOOPAN', 'BALA GUHAN.', 'BINILA JOSE', 'SIJITH.K.R.', 'BEENA GUHAN.',
+        'BELSY CLETUS', 'MINU JAYAN.', 'SHYAM PRASAD.P.V,', 'SALVINE E JOHN',
+        'VINAYACHANDRAN NAIR', 'SHILPA M MANUEL', 'RAJEEVAN.P.R.', 'MADHU.K..',
+        'MOHAMMED RAFEEQUE.P.K.'
+    ]
+    main_df.loc[main_df['Doctor Name'].isin(prashob_docs), 'Mark_Exec'] = 'PRASHOB TP'
+    
     main_df['Degree'] = main_df['Doctor Name'].map(deg_map).fillna('')
     
     print("Saving processed data...")
