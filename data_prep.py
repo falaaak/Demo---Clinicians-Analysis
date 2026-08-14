@@ -41,9 +41,13 @@ def prep_data():
             deg_map[name] = qual_str
             
     # Filter Outliers (MCH, IMCH, etc.)
-    outlier_keywords = ['MCH', 'IMCH', 'BMH', 'KMCT', 'HAIR', 'ESI', 'HOSPITAL', 'HOSP', 'CLINIC', 'LAB', 'LABS', 'CARE', 'HEALTHCARE', 'BANK', 'AIMS', 'CGHS', 'RAILWAY', 'FOUNDATION', 'SREEDHAREEYAM']
+    outlier_keywords = ['MCH', 'IMCH', 'BMH', 'KMCT', 'HAIR', 'ESI', 'HOSPITAL', 'HOSP', 'CLINIC', 'LAB', 'LABS', 'CARE', 'HEALTHCARE', 'BANK', 'AIMS', 'CGHS', 'RAILWAY', 'FOUNDATION', 'SREEDHAREEYAM', 'MIMS', 'HOMEO', 'METROPOLIS', 'FITBASE', 'CORPORATION']
+    exact_outliers = ['JAYASREE.S', 'MAHESH MENON']
+    
     def is_outlier(name):
         name_upper = name.upper()
+        if name_upper.strip() in exact_outliers:
+            return True
         for kw in outlier_keywords:
             if kw in name_upper.split() or name_upper.startswith(kw + '-') or name_upper.startswith(kw + ' '):
                 return True

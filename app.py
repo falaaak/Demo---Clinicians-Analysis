@@ -49,43 +49,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main, .b
     max-width: 1400px !important;
 }
 
-/* Minimal Tabs (Autofit) */
-button[data-baseweb="tab"] {
-    background: transparent !important;
-    color: var(--text-secondary) !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    padding: 0.75rem 0.5rem !important;
-    border: none !important;
-    border-bottom: 3px solid transparent !important;
-    border-radius: 0 !important;
-    flex: 1 !important; /* Autofit to container */
-    text-align: center !important;
-    justify-content: center !important;
-    margin: 0 !important;
-    white-space: nowrap !important;
-}
-button[data-baseweb="tab"][aria-selected="true"] {
-    color: var(--deep-violet) !important;
-    background: transparent !important;
-    border-bottom: 3px solid var(--deep-violet) !important;
-    box-shadow: none !important;
-}
-[data-baseweb="tab-highlight"], [data-baseweb="tab-border"] {
-    display: none !important;
-}
-[data-baseweb="tab-list"] {
-    display: flex !important;
-    width: 100% !important;
-    gap: 0 !important; /* Remove unwanted spaces */
-    background: var(--surface-white) !important;
-    border: 1px solid var(--border-soft) !important;
-    border-radius: var(--radius-soft) !important;
-    padding: 0 8px !important;
-    box-shadow: var(--shadow-subtle) !important;
-    overflow-x: hidden !important;
-}
-
 /* Elegant KPI Cards */
 .metric-card { 
     background: var(--surface-white); 
@@ -93,12 +56,7 @@ button[data-baseweb="tab"][aria-selected="true"] {
     border-radius: var(--radius-soft); 
     padding: 1.5rem; 
     box-shadow: var(--shadow-subtle);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
     height: 100%;
-}
-.metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
 }
 .metric-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;}
 .metric-value { font-size: 2rem; font-weight: 700; color: var(--deep-violet); line-height: 1.1; }
@@ -111,10 +69,6 @@ button[data-baseweb="tab"][aria-selected="true"] {
     padding: 1.5rem; 
     box-shadow: var(--shadow-subtle); 
     margin-bottom: 1.5rem; 
-    transition: box-shadow 0.2s ease;
-}
-.chart-wrap:hover {
-    box-shadow: var(--shadow-hover);
 }
 .chart-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
 
