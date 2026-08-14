@@ -104,6 +104,13 @@ def prep_data():
             
     outliers_df['Doctor Clean'] = outliers_df['Doctor Clean'].map(outlier_canonical_map)
 
+    # Merge Sapna S Nambiar
+    main_df['Doctor Name'] = main_df['Doctor Name'].replace({'SAPNA S NAMBIAR.': '(MAJOR) SAPNA S NAMBIAR.'})
+    if '(MAJOR)SAPNA S NAMBIAR.' in mark_exec_map:
+        mark_exec_map['(MAJOR) SAPNA S NAMBIAR.'] = mark_exec_map['(MAJOR)SAPNA S NAMBIAR.']
+    if '(MAJOR)SAPNA S NAMBIAR.' in deg_map:
+        deg_map['(MAJOR) SAPNA S NAMBIAR.'] = deg_map['(MAJOR)SAPNA S NAMBIAR.']
+
     # Apply maps to canonical names
     main_df['Mark_Exec'] = main_df['Doctor Name'].map(mark_exec_map).fillna(np.nan)
     
