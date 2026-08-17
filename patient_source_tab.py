@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from app import render_table, metric_card
+import plotly.graph_objects as go
 
-def render_patient_source_tab(selected_months, top_n, df, test_df, self_df, monthly_doc_summary, month_order):
+def render_patient_source_tab(selected_months, top_n, df, test_df, self_df, monthly_doc_summary, month_order, metric_card, render_table):
     st.markdown("## Patient Source Analysis")
     st.markdown("Analyze the difference between **Self-Billed / Self-Referred Patients** and **Doctor-Referred Patients**.")
     

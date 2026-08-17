@@ -318,7 +318,7 @@ with t_walkin:
     selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t_walkin")
     if selected_months:
         from patient_source_tab import render_patient_source_tab
-        render_patient_source_tab(selected_months, top_n, df, test_df, self_df, monthly_doc_summary, month_order)
+        render_patient_source_tab(selected_months, top_n, df, test_df, self_df, monthly_doc_summary, month_order, metric_card, render_table)
 
 # --- Tab 2: Unassigned Steady Docs (>25,000 Total in Period) ---
 with t2:
