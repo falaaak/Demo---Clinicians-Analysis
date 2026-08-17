@@ -584,22 +584,81 @@ with t6:
 # --- Tab 7: Outliers (Institutions) ---
 with t7:
     st.markdown("### Outlier Institutions (MCH, BMH, KMCT, etc.)")
-    st.markdown("These entries are institutions or labs and were excluded from the main doctors analysis. Showing all data year-round.")
+    st.markdown("These entries are institutions or labs (B2B Matrix) and were excluded from the main doctors analysis.")
     
-    outlier_summary = outliers_df_full.groupby(['Doctor Clean', 'Month']).agg({'Total Amount': 'sum', 'Total Volume': 'sum'}).reset_index()
-    outlier_totals = outlier_summary.groupby('Doctor Clean')['Total Amount'].sum().reset_index().sort_values(by='Total Amount', ascending=False)
-    
-    c1, c2 = st.columns(2)
-    with c1: metric_card("Total Outlier Institutions", f"{len(outlier_totals)}")
-    with c2: 
-        if not outlier_totals.empty:
-            metric_card("Total Outlier Revenue", f"₹{outlier_totals['Total Amount'].sum():,.0f}")
-    
-    outlier_totals['Total Amount'] = outlier_totals['Total Amount'].apply(lambda x: f"₹{x:,.2f}")
-    if not outlier_totals.empty:
-        render_table(outlier_totals, key="t7")
-    else:
-        st.info("No outliers found in the dataset.")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t7")
+    if selected_months:
+        f_outliers = outliers_df_full[outliers_df_full['Month'].isin(selected_months)]
+        
+        # We need to extract tests for the outliers for the requested test analysis table
+        outlier_test_rows = []
+        for _, row in f_outliers.iterrows():
+            for t in row['Tests']:
+                outlier_test_rows.append({
+                    'Month': row['Month'],
+                    'Institution': row['Doctor Clean'],
+                    'Test Name': t['Test Name'],
+                    'Test Count': t['Count'],
+                    'Test Amount': t['Amount']
+                })
+        
+        o_test_df = pd.DataFrame(outlier_test_rows) if outlier_test_rows else pd.DataFrame()
+        
+        # Institution summary
+        outlier_summary = f_outliers.groupby('Doctor Clean').agg({'Total Amount': 'sum', 'Total Volume': 'sum'}).reset_index()
+        outlier_totals = outlier_summary.sort_values(by='Total Amount', ascending=False).head(top_n)
+        
+        c1, c2 = st.columns(2)
+        with c1: metric_card("Total Outlier Institutions", f"{len(outlier_summary)}")
+        with c2: 
+            if not outlier_summary.empty:
+                metric_card("Total Outlier Revenue", f"₹{outlier_summary['Total Amount'].sum():,.0f}")
+        
+        st.markdown(f"#### Top {top_n} Institutions by Revenue")
+        outlier_display = outlier_totals.copy()
+        outlier_display['Total Amount'] = outlier_display['Total Amount'].apply(lambda x: f"₹{x:,.2f}")
+        if not outlier_display.empty:
+            render_table(outlier_display, key="t7_inst")
+        else:
+            st.info("No outliers found in the selected period.")
+            
+        st.markdown("---")
+        st.markdown(f"### B2B Matrix: Range of Tests Billed by Top {top_n} Institutions")
+        st.markdown("Detailed breakdown of tests referred by these institutions. Includes the total volume of individual tests, total amount billed, number of unique institutions prescribing it, and the months it was billed in.")
+        
+        if not o_test_df.empty:
+            # Filter tests to only those from the Top N institutions
+            top_inst_names = outlier_totals['Doctor Clean'].tolist()
+            o_test_top = o_test_df[o_test_df['Institution'].isin(top_inst_names)]
+            
+            # Aggregate tests
+            test_agg = o_test_top.groupby('Test Name').agg({
+                'Test Count': 'sum',
+                'Test Amount': 'sum'
+            }).reset_index()
+            test_agg = test_agg.sort_values('Test Amount', ascending=False)
+            
+            # Additional parameters: Number of unique institutions requesting this test
+            test_inst_count = o_test_top.groupby('Test Name')['Institution'].nunique().reset_index().rename(columns={'Institution': 'Unique Insts Billed'})
+            
+            # Billed in each month
+            test_months = o_test_top.groupby('Test Name')['Month'].unique().apply(lambda x: ", ".join(sorted(x))).reset_index().rename(columns={'Month': 'Months Billed'})
+            
+            test_agg = test_agg.merge(test_inst_count, on='Test Name', how='left')
+            test_agg = test_agg.merge(test_months, on='Test Name', how='left')
+            
+            # Format
+            test_agg['Test Amount'] = test_agg['Test Amount'].apply(lambda x: f"₹{x:,.0f}")
+            test_agg.rename(columns={'Test Count': 'Total Volume Billed'}, inplace=True)
+            
+            # Add index positions
+            test_agg.reset_index(drop=True, inplace=True)
+            test_agg.index = test_agg.index + 1
+            test_agg.index.name = 'Rank'
+            
+            render_table(test_agg.reset_index(), key="t7_tests")
+        else:
+            st.info("No test data found for the selected criteria.")
 
 # --- Tab 8: Doctor Test Share ---
 with t8:
