@@ -115,6 +115,9 @@ def prep_data():
     if '(MAJOR)SAPNA S NAMBIAR.' in deg_map:
         deg_map['(MAJOR) SAPNA S NAMBIAR.'] = deg_map['(MAJOR)SAPNA S NAMBIAR.']
 
+    # Override for VINOD.V
+    deg_map['VINOD.V'] = 'MS (ortho)'
+
     # Apply maps to canonical names
     main_df['Mark_Exec'] = main_df['Doctor Name'].map(mark_exec_map).fillna(np.nan)
     

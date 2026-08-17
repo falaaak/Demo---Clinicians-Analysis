@@ -49,6 +49,15 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main, .b
     max-width: 1400px !important;
 }
 
+/* Sticky Tabs */
+[data-testid="stTabs"] > div:first-child, [data-baseweb="tab-list"] {
+    position: sticky !important;
+    top: 0px !important;
+    z-index: 999 !important;
+    background-color: var(--bg-main) !important;
+    padding-top: 10px;
+}
+
 /* Elegant KPI Cards */
 .metric-card { 
     background: var(--surface-white); 
