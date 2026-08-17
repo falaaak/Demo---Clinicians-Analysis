@@ -201,10 +201,16 @@ def load_data():
     df['Month_Idx'] = df['Month'].apply(lambda x: month_order.index(x) if x in month_order else 99)
     test_df['Month_Idx'] = test_df['Month'].apply(lambda x: month_order.index(x) if x in month_order else 99)
     
-    return df, test_df, outliers_df, month_order
+    try:
+        self_df = pd.read_pickle('self_data.pkl')
+        self_df['Month_Idx'] = self_df['Month'].apply(lambda x: month_order.index(x) if x in month_order else 99)
+    except Exception:
+        self_df = pd.DataFrame(columns=['Month', 'Test Name', 'Test Count', 'Test Amount', 'Month_Idx'])
+        
+    return df, test_df, outliers_df, self_df, month_order
 
 try:
-    df_full, test_df_full, outliers_df_full, month_order = load_data()
+    df_full, test_df_full, outliers_df_full, self_df_full, month_order = load_data()
 except Exception as e:
     st.error(f"Error loading data: {e}. Please ensure data_prep.py has been run.")
     st.stop()
@@ -247,18 +253,20 @@ def render_filters(key_prefix):
         
     f_df = df_full[df_full['Month'].isin(selected_months)]
     f_test_df = test_df_full[test_df_full['Month'].isin(selected_months)]
+    f_self_df = self_df_full[self_df_full['Month'].isin(selected_months)]
     
     f_monthly_doc_summary = f_df.groupby(['Doctor Name', 'Month', 'Month_Idx', 'Qualification', 'Mark_Exec'], dropna=False).agg({
         'Total Amount': 'sum',
         'Total Volume': 'sum'
     }).reset_index()
     
-    return selected_months, top_n, f_df, f_test_df, f_monthly_doc_summary
+    return selected_months, top_n, f_df, f_test_df, f_self_df, f_monthly_doc_summary
 
 
 # Tabs
-t1, t2, t3, t4, t5, t6, t7, t8 = st.tabs([
+t1, t_walkin, t2, t3, t4, t5, t6, t7, t8 = st.tabs([
     "Top N Doctors", 
+    "Walk-in vs Referred",
     "Unassigned Steady Docs", 
     "Top N Tests", 
     "Growth Forecast", 
@@ -270,7 +278,7 @@ t1, t2, t3, t4, t5, t6, t7, t8 = st.tabs([
 
 # --- Tab 1: Top N Doctors ---
 with t1:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t1")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t1")
     if selected_months:
         st.markdown(f"### Top {top_n} Doctors (10,000+ amount in most months)")
         
@@ -305,6 +313,50 @@ with t1:
         else:
             st.info("No doctors met the criteria in the selected time period.")
 
+# --- Tab Walkin: Walk-in vs Referred ---
+with t_walkin:
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t_walkin")
+    if selected_months:
+        st.markdown("### Walk-in (Self Billed) vs Doctor Referred")
+        st.markdown("Compare total walk-in customers against doctor referred patients for the selected months.")
+        
+        doc_vol = df['Total Volume'].sum()
+        doc_amt = df['Total Amount'].sum()
+        self_vol = self_df['Test Count'].sum()
+        self_amt = self_df['Test Amount'].sum()
+        
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: metric_card("Referred Volume", f"{doc_vol:,.0f}")
+        with c2: metric_card("Referred Revenue", f"₹{doc_amt:,.0f}")
+        with c3: metric_card("Self Volume", f"{self_vol:,.0f}")
+        with c4: metric_card("Self Revenue", f"₹{self_amt:,.0f}")
+        
+        st.markdown("<br/>", unsafe_allow_html=True)
+        
+        import plotly.express as px
+        # Breakdown pie chart
+        fig_vol = px.pie(names=['Doctor Referred', 'Self Billed'], values=[doc_vol, self_vol], title="Volume Distribution", hole=0.4, color_discrete_sequence=['#9400D3', '#D3D3FF'])
+        fig_amt = px.pie(names=['Doctor Referred', 'Self Billed'], values=[doc_amt, self_amt], title="Revenue Distribution", hole=0.4, color_discrete_sequence=['#9400D3', '#D3D3FF'])
+        
+        r1, r2 = st.columns(2)
+        with r1: st.plotly_chart(fig_vol, use_container_width=True)
+        with r2: st.plotly_chart(fig_amt, use_container_width=True)
+        
+        st.markdown(f"### Top {top_n} Tests by Self Billed Patients")
+        st.markdown("Analysis of the most common tests billed without a doctor's referral.")
+        
+        top_tests_self = self_df.groupby('Test Name').agg({'Test Count': 'sum', 'Test Amount': 'sum'}).reset_index()
+        top_tests_self = top_tests_self.sort_values('Test Amount', ascending=False).head(top_n)
+        top_tests_self['% Share of Revenue (Self)'] = (top_tests_self['Test Amount'] / self_amt * 100).round(2).astype(str) + '%'
+        top_tests_self['Test Amount'] = top_tests_self['Test Amount'].apply(lambda x: f"₹{x:,.0f}")
+        
+        # Add index positions
+        top_tests_self.reset_index(drop=True, inplace=True)
+        top_tests_self.index = top_tests_self.index + 1
+        top_tests_self.index.name = 'Position'
+        
+        render_table(top_tests_self.reset_index(), key="t_walkin_tests")
+
 # --- Tab 2: Unassigned Steady Docs (>25,000 Total in Period) ---
 with t2:
     st.markdown("### Doctors without Marketing Executive (>25,000 Total Billed Amount)")
@@ -334,7 +386,7 @@ with t2:
 
 # --- Tab 3: Top N Tests ---
 with t3:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t3")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t3")
     if selected_months:
         st.markdown(f"### Top {top_n} Tests Sent by Top {top_n} Supporting Doctors")
         overall_top_n = monthly_doc_summary.groupby('Doctor Name')['Total Amount'].sum().nlargest(top_n).index
@@ -363,7 +415,7 @@ with t3:
 
 # --- Tab 4: Growth Forecasting ---
 with t4:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t4")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t4")
     if selected_months:
         st.markdown(f"### 🔮 August 2027 Top {top_n} Projection")
         st.markdown("This model analyzes the **full year's historical pattern** for each doctor to predict their monthly performance 12 months into the future (August 2027). Doctors require at least 5 months of historical data to generate a stable forecast.")
@@ -440,7 +492,7 @@ with t4:
 
 # --- Tab 5: Churn & Drop Analysis ---
 with t5:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t5")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t5")
     if selected_months:
         st.markdown("### Support Pattern Drops & Sensitive Issues")
         st.markdown("Compares average support in the first half of the selected period vs the second half.")
@@ -514,7 +566,7 @@ with t5:
 
 # --- Tab 6: Top N Tests & Strategies ---
 with t6:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t6")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t6")
     if selected_months:
         st.markdown(f"### Top {top_n} Tests & Growth Strategies")
         
@@ -588,7 +640,7 @@ with t7:
 
 # --- Tab 8: Doctor Test Share ---
 with t8:
-    selected_months, top_n, df, test_df, monthly_doc_summary = render_filters("t8")
+    selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t8")
     if selected_months:
         st.markdown(f"### Doctor Test Share Analysis (Top {top_n} Doctors)")
         st.markdown("Analyze the specific tests prescribed by your top doctors to identify their clinical focus and cross-selling opportunities.")
