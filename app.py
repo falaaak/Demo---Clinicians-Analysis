@@ -266,7 +266,7 @@ def render_filters(key_prefix):
 # Tabs
 t1, t_walkin, t2, t3, t4, t5, t6, t7, t8 = st.tabs([
     "Top N Doctors", 
-    "Walk-in vs Referred",
+    "Patient Source Analysis",
     "Unassigned Steady Docs", 
     "Top N Tests", 
     "Growth Forecast", 
@@ -313,49 +313,12 @@ with t1:
         else:
             st.info("No doctors met the criteria in the selected time period.")
 
-# --- Tab Walkin: Walk-in vs Referred ---
+# --- Tab Walkin: Patient Source Analysis ---
 with t_walkin:
     selected_months, top_n, df, test_df, self_df, monthly_doc_summary = render_filters("t_walkin")
     if selected_months:
-        st.markdown("### Walk-in (Self Billed) vs Doctor Referred")
-        st.markdown("Compare total walk-in customers against doctor referred patients for the selected months.")
-        
-        doc_vol = df['Total Volume'].sum()
-        doc_amt = df['Total Amount'].sum()
-        self_vol = self_df['Test Count'].sum()
-        self_amt = self_df['Test Amount'].sum()
-        
-        c1, c2, c3, c4 = st.columns(4)
-        with c1: metric_card("Referred Volume", f"{doc_vol:,.0f}")
-        with c2: metric_card("Referred Revenue", f"₹{doc_amt:,.0f}")
-        with c3: metric_card("Self Volume", f"{self_vol:,.0f}")
-        with c4: metric_card("Self Revenue", f"₹{self_amt:,.0f}")
-        
-        st.markdown("<br/>", unsafe_allow_html=True)
-        
-        import plotly.express as px
-        # Breakdown pie chart
-        fig_vol = px.pie(names=['Doctor Referred', 'Self Billed'], values=[doc_vol, self_vol], title="Volume Distribution", hole=0.4, color_discrete_sequence=['#9400D3', '#D3D3FF'])
-        fig_amt = px.pie(names=['Doctor Referred', 'Self Billed'], values=[doc_amt, self_amt], title="Revenue Distribution", hole=0.4, color_discrete_sequence=['#9400D3', '#D3D3FF'])
-        
-        r1, r2 = st.columns(2)
-        with r1: st.plotly_chart(fig_vol, use_container_width=True)
-        with r2: st.plotly_chart(fig_amt, use_container_width=True)
-        
-        st.markdown(f"### Top {top_n} Tests by Self Billed Patients")
-        st.markdown("Analysis of the most common tests billed without a doctor's referral.")
-        
-        top_tests_self = self_df.groupby('Test Name').agg({'Test Count': 'sum', 'Test Amount': 'sum'}).reset_index()
-        top_tests_self = top_tests_self.sort_values('Test Amount', ascending=False).head(top_n)
-        top_tests_self['% Share of Revenue (Self)'] = (top_tests_self['Test Amount'] / self_amt * 100).round(2).astype(str) + '%'
-        top_tests_self['Test Amount'] = top_tests_self['Test Amount'].apply(lambda x: f"₹{x:,.0f}")
-        
-        # Add index positions
-        top_tests_self.reset_index(drop=True, inplace=True)
-        top_tests_self.index = top_tests_self.index + 1
-        top_tests_self.index.name = 'Position'
-        
-        render_table(top_tests_self.reset_index(), key="t_walkin_tests")
+        from patient_source_tab import render_patient_source_tab
+        render_patient_source_tab(selected_months, top_n, df, test_df, self_df, monthly_doc_summary, month_order)
 
 # --- Tab 2: Unassigned Steady Docs (>25,000 Total in Period) ---
 with t2:
