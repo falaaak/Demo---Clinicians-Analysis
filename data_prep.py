@@ -42,7 +42,10 @@ def prep_data():
             
     # Filter Outliers (MCH, IMCH, etc.)
     outlier_keywords = ['MCH', 'IMCH', 'BMH', 'KMCT', 'HAIR', 'ESI', 'HOSPITAL', 'HOSP', 'CLINIC', 'LAB', 'LABS', 'CARE', 'HEALTHCARE', 'BANK', 'AIMS', 'CGHS', 'RAILWAY', 'FOUNDATION', 'SREEDHAREEYAM', 'MIMS', 'HOMEO', 'METROPOLIS', 'FITBASE', 'CORPORATION']
-    exact_outliers = ['JAYASREE.S', 'MAHESH MENON', 'REETA JAMES', 'SHAHUL HAMEED.', 'SHAHUL HAMEED.C.P', 'SHAHUL HAMEED.K.']
+    exact_outliers = ['JAYASREE.S', 'MAHESH MENON']
+    
+    drop_list = ['REETA JAMES', 'SHAHUL HAMEED.', 'SHAHUL HAMEED.C.P', 'SHAHUL HAMEED.K.']
+    df = df[~df['Doctor Clean'].str.strip().str.upper().isin(drop_list)]
     
     def is_outlier(name):
         name_upper = name.upper()
